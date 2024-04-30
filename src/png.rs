@@ -4,7 +4,7 @@ use skia_safe::{
     utils::text_utils::Align, Bitmap, Canvas, Color4f, Font, FontMgr, ImageInfo, Paint, Point, Rect,
 };
 
-use crate::ImageParams;
+use crate::{Handler, ImageParams};
 
 #[derive(Clone, Copy, Debug, PartialEq, Deserialize)]
 pub enum RenderTarget {
@@ -61,16 +61,7 @@ fn render_ctx(params: ImageParams, closure: impl FnOnce(&Canvas) -> Result<()>) 
     Ok(image_data.as_bytes().into())
 }
 
-fn draw_black(canvas: &Canvas, params: ImageParams) {
-    let black_paint = Paint::new(Color4f::new(0.0, 0.0, 0.0, 1.0), None);
-
-    canvas.draw_rect(
-        Rect::new(0.0, 0.0, params.width as f32, params.height as f32),
-        &black_paint,
-    );
-}
-
-fn draw_error(canvas: &Canvas, params: ImageParams, route: &str, error: eyre::Report) {
+fn draw_error(canvas: &Canvas, params: ImageParams, error: eyre::Report) {
     let font_mgr = FontMgr::new();
     let typeface = font_mgr
         .new_from_data(include_bytes!("../media/OpenSansEmoji.ttf"), None)
@@ -111,7 +102,7 @@ fn draw_error(canvas: &Canvas, params: ImageParams, route: &str, error: eyre::Re
     canvas.draw_line((0.0, 55.0), (params.width as f32, 55.0), &black_paint);
 
     canvas.draw_str_align(
-        format!("ERROR - {route}"),
+        "ERROR",
         (params.width / 2, 40),
         &big_font,
         &black_paint,
@@ -151,9 +142,9 @@ fn draw_error(canvas: &Canvas, params: ImageParams, route: &str, error: eyre::Re
     }
 }
 
-pub fn black_png(params: ImageParams) -> Result<Vec<u8>> {
+pub fn png_handler(params: ImageParams, handler: &impl Handler) -> Result<Vec<u8>> {
     let image_data = render_ctx(params, |canvas| {
-        draw_black(canvas, params);
+        handler.handle(canvas, params)?;
 
         Ok(())
     })?;
@@ -161,9 +152,9 @@ pub fn black_png(params: ImageParams) -> Result<Vec<u8>> {
     Ok(image_data)
 }
 
-pub fn error_png(params: ImageParams, route: &str, error: eyre::Report) -> Result<Vec<u8>> {
+pub fn error_png(params: ImageParams, error: eyre::Report) -> Result<Vec<u8>> {
     let data = render_ctx(params, move |canvas| {
-        draw_error(canvas, params, route, error);
+        draw_error(canvas, params, error);
         Ok(())
     })?;
 
