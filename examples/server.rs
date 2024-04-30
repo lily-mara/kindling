@@ -1,16 +1,12 @@
 use axum::Router;
 use eyre::bail;
+use kindling::{ApplicationBuilder, Handler, ImageParams};
 use tracing_subscriber::EnvFilter;
-use transit_kindle::{ApplicationBuilder, Handler};
 
 struct ErrorHandler;
 
 impl Handler for ErrorHandler {
-    fn handle(
-        &self,
-        _canvas: &skia_safe::Canvas,
-        _props: transit_kindle::ImageParams,
-    ) -> eyre::Result<()> {
+    fn handle(&self, _canvas: &skia_safe::Canvas, _props: ImageParams) -> eyre::Result<()> {
         bail!("I always return an error");
     }
 }

@@ -684,6 +684,28 @@ dependencies = [
 ]
 
 [[package]]
+name = "kindling"
+version = "0.1.0"
+dependencies = [
+ "axum",
+ "chrono",
+ "eyre",
+ "itertools",
+ "reqwest",
+ "serde",
+ "serde_json",
+ "serde_path_to_error",
+ "serde_yaml",
+ "skia-safe",
+ "tokio",
+ "tower",
+ "tower-http",
+ "tracing",
+ "tracing-subscriber",
+ "unicode-bom",
+]
+
+[[package]]
 name = "lazy_static"
 version = "1.4.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -1552,28 +1574,6 @@ dependencies = [
  "tracing",
  "tracing-core",
  "tracing-log",
-]
-
-[[package]]
-name = "transit-kindle"
-version = "0.1.0"
-dependencies = [
- "axum",
- "chrono",
- "eyre",
- "itertools",
- "reqwest",
- "serde",
- "serde_json",
- "serde_path_to_error",
- "serde_yaml",
- "skia-safe",
- "tokio",
- "tower",
- "tower-http",
- "tracing",
- "tracing-subscriber",
- "unicode-bom",
 ]
 
 [[package]]

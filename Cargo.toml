@@ -1,5 +1,5 @@
 [package]
-name = "transit-kindle"
+name = "kindling"
 version = "0.1.0"
 edition = "2021"
 
