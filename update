@@ -1,0 +1,12 @@
+#!/bin/bash
+
+set -e
+
+git pull
+cargo build --release
+TEST_CONFIG=1 ./target/release/transit-kindle
+sudo chown -R transit-kindle:transit-kindle .
+sudo systemctl daemon-reload
+sudo systemctl stop transit-kindle
+sudo cp target/release/transit-kindle /usr/bin/
+sudo systemctl start transit-kindle
