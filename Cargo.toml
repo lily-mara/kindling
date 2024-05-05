@@ -2,6 +2,11 @@
 name = "kindling"
 version = "0.1.0"
 edition = "2021"
+authors = ["Lily Mara"]
+description = "Framework for building e-ink smart displays with Kindles"
+readme = "README.md"
+repository = "https://github.com/lily-mara/kindling"
+license = "MIT"
 
 [dependencies]
 axum = "0.7"
