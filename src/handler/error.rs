@@ -2,7 +2,7 @@ use axum::async_trait;
 use eyre::Result;
 use skia_safe::{utils::text_utils::Align, Canvas, Color4f, Font, FontMgr, Paint, Rect};
 
-use crate::{Handler, ImageParams};
+use crate::Handler;
 
 pub(crate) struct ErrorHandler {
     pub error: eyre::Report,
@@ -16,7 +16,7 @@ impl Handler for ErrorHandler {
         Ok(())
     }
 
-    fn draw(&self, canvas: &Canvas, params: ImageParams, _data: ()) -> Result<()> {
+    fn draw(&self, canvas: &Canvas, _data: ()) -> Result<()> {
         let font_mgr = FontMgr::new();
         let typeface = font_mgr
             .new_from_data(include_bytes!("../../media/OpenSansEmoji.ttf"), None)
@@ -28,37 +28,42 @@ impl Handler for ErrorHandler {
         let black_paint = Paint::new(Color4f::new(0.0, 0.0, 0.0, 1.0), None);
         let light_grey_paint = Paint::new(Color4f::new(0.8, 0.8, 0.8, 1.0), None);
 
+        let image_info = canvas.image_info();
+
         canvas.draw_rect(
             Rect::new(
                 0.0,
-                params.height as f32 - 30.0,
-                params.width as f32,
-                params.height as f32,
+                image_info.height() as f32 - 30.0,
+                image_info.width() as f32,
+                image_info.height() as f32,
             ),
             &light_grey_paint,
         );
         canvas.draw_line(
-            (0.0, params.height as f32 - 30.0),
-            (params.width as f32, params.height as f32 - 30.0),
+            (0.0, image_info.height() as f32 - 30.0),
+            (image_info.width() as f32, image_info.height() as f32 - 30.0),
             &black_paint,
         );
         canvas.draw_str_align(
             format!("Kindling built {}", crate::BUILD_DATE),
-            (params.width as f32 / 2.0, params.height as f32 - 8.0),
+            (
+                image_info.width() as f32 / 2.0,
+                image_info.height() as f32 - 8.0,
+            ),
             &small_font,
             &black_paint,
             Align::Center,
         );
 
         canvas.draw_rect(
-            Rect::new(0.0, 0.0, params.width as f32, 55.0),
+            Rect::new(0.0, 0.0, image_info.width() as f32, 55.0),
             &light_grey_paint,
         );
-        canvas.draw_line((0.0, 55.0), (params.width as f32, 55.0), &black_paint);
+        canvas.draw_line((0.0, 55.0), (image_info.width() as f32, 55.0), &black_paint);
 
         canvas.draw_str_align(
             "ERROR",
-            (params.width / 2, 40),
+            (image_info.width() / 2, 40),
             &big_font,
             &black_paint,
             Align::Center,
@@ -82,7 +87,7 @@ impl Handler for ErrorHandler {
 
                 let (text_width, _) =
                     small_font.measure_str(&err_str_build_next, Some(&black_paint));
-                if 20.0 + text_width > params.width as f32 - 20.0 {
+                if 20.0 + text_width > image_info.width() as f32 - 20.0 {
                     canvas.draw_str(&err_str_build, (x, y), &small_font, &black_paint);
                     err_str_build.clear();
                     err_str_build_next.clear();

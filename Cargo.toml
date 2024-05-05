@@ -1,6 +1,6 @@
 [package]
 name = "kindling"
-version = "0.1.1"
+version = "0.1.2"
 edition = "2021"
 authors = ["Lily Mara"]
 description = "Framework for building e-ink smart displays with Kindles"

@@ -2,8 +2,6 @@ use axum::async_trait;
 use eyre::Result;
 use skia_safe::Canvas;
 
-use crate::ImageParams;
-
 mod blackout;
 mod error;
 
@@ -16,5 +14,5 @@ pub trait Handler {
 
     async fn load(&self) -> Result<Self::Data>;
 
-    fn draw(&self, canvas: &Canvas, params: ImageParams, data: Self::Data) -> Result<()>;
+    fn draw(&self, canvas: &Canvas, data: Self::Data) -> Result<()>;
 }

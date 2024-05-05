@@ -51,7 +51,7 @@ where
 
     canvas.clear(Color4f::new(1.0, 1.0, 1.0, 1.0));
 
-    handler.draw(&canvas, params, data)?;
+    handler.draw(&canvas, data)?;
 
     let image = bitmap.as_image();
 

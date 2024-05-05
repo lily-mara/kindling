@@ -2,7 +2,7 @@ use std::sync::atomic::{AtomicBool, Ordering};
 
 use axum::{async_trait, Router};
 use eyre::{bail, Result};
-use kindling::{ApplicationBuilder, Handler, ImageParams};
+use kindling::{ApplicationBuilder, Handler};
 use tracing_subscriber::EnvFilter;
 
 struct ErrorHandler {
@@ -21,12 +21,7 @@ impl Handler for ErrorHandler {
         bail!("I don't load the first time!")
     }
 
-    fn draw(
-        &self,
-        _canvas: &skia_safe::Canvas,
-        _props: ImageParams,
-        _data: (),
-    ) -> eyre::Result<()> {
+    fn draw(&self, _canvas: &skia_safe::Canvas, _data: ()) -> eyre::Result<()> {
         bail!("I always return an error");
     }
 }

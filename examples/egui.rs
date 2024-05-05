@@ -1,9 +1,7 @@
-use std::sync::atomic::{AtomicBool, Ordering};
-
 use axum::{async_trait, Router};
 use egui::Visuals;
-use eyre::{bail, Result};
-use kindling::{ApplicationBuilder, Handler, ImageParams};
+use eyre::Result;
+use kindling::{ApplicationBuilder, Handler};
 use skia_safe::Canvas;
 use tracing_subscriber::EnvFilter;
 
@@ -17,7 +15,7 @@ impl Handler for EguiHandler {
         Ok(())
     }
 
-    fn draw(&self, canvas: &Canvas, _props: ImageParams, _data: ()) -> eyre::Result<()> {
+    fn draw(&self, canvas: &Canvas, _data: ()) -> eyre::Result<()> {
         smol_egui_skia::draw_onto_canvas(
             canvas,
             |ctx| {

@@ -14,16 +14,18 @@ impl Handler for BlackoutHandler {
         Ok(())
     }
 
-    fn draw(
-        &self,
-        canvas: &skia_safe::Canvas,
-        params: crate::ImageParams,
-        _data: (),
-    ) -> Result<()> {
+    fn draw(&self, canvas: &skia_safe::Canvas, _data: ()) -> Result<()> {
         let black_paint = Paint::new(Color4f::new(0.0, 0.0, 0.0, 1.0), None);
 
+        let image_info = canvas.image_info();
+
         canvas.draw_rect(
-            Rect::new(0.0, 0.0, params.width as f32, params.height as f32),
+            Rect::new(
+                0.0,
+                0.0,
+                image_info.width() as f32,
+                image_info.height() as f32,
+            ),
             &black_paint,
         );
 
