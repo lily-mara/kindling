@@ -6,35 +6,41 @@ use axum::{
     routing::get,
     Router,
 };
+use chrono::Utc;
 use eyre::{Context, Result};
 use serde::Deserialize;
-use skia_safe::Canvas;
-use std::sync::Arc;
+use std::{borrow::Cow, sync::Arc};
 
 use crate::png::RenderTarget;
 
-mod blackout_handler;
+mod handler;
 mod png;
+
+pub use crate::handler::Handler;
 
 const BUILD_DATE: &'static str = env!("BUILD_DATE");
 
-pub trait Handler {
-    fn handle(&self, canvas: &Canvas, props: ImageParams) -> Result<()>;
+pub struct ApplicationBuilder<S> {
+    router: Router<S>,
+    base_url: Cow<'static, str>,
 }
 
-pub struct ApplicationBuilder {
-    router: Router,
-}
-
-impl ApplicationBuilder {
-    pub fn new(router: Router) -> Self {
-        Self { router }
+impl<S> ApplicationBuilder<S>
+where
+    S: 'static + Clone + Send + Sync,
+{
+    pub fn new(router: Router<S>, base_url: impl Into<Cow<'static, str>>) -> Self {
+        Self {
+            router,
+            base_url: base_url.into(),
+        }
     }
 
-    pub fn add_handler<H>(mut self, path: &str, handler: H) -> Self
-    where
-        H: 'static + Send + Sync + Handler,
-    {
+    pub fn add_handler(
+        mut self,
+        path: &str,
+        handler: impl 'static + Send + Sync + Handler,
+    ) -> Self {
         let handler = Arc::new(handler);
         let inner_path = path.to_owned();
 
@@ -43,49 +49,64 @@ impl ApplicationBuilder {
             get(|params: Option<Query<ImageParams>>| async move {
                 let params = params.unwrap_or_default();
 
-                let data = png::png_handler(params.0, &*handler)
-                    .wrap_err_with(|| format!("{}::handle", std::any::type_name::<H>()))
-                    .wrap_err_with(|| inner_path.clone())
-                    .wrap_err_png(params.0)?;
-
-                Ok::<_, ErrorPng>(
-                    Response::builder()
-                        .status(StatusCode::OK)
-                        .header("Content-Type", "image/png")
-                        .body(Body::from(Bytes::from(data)))
-                        .unwrap(),
-                )
+                match handler_inner(&*handler, params.0).await {
+                    Ok(x) => Ok(x),
+                    Err(error) => {
+                        let error = error.wrap_err(inner_path.clone());
+                        Err(ErrorPng {
+                            data: png::png_handler(params.0, &handler::ErrorHandler { error }, ())
+                                .unwrap(),
+                        })
+                    }
+                }
             }),
         );
         self
     }
 
-    pub fn attach(self) -> Router {
-        self.add_handler(
-            "/kindling/v0.1/black.png",
-            blackout_handler::BlackoutHandler,
-        )
-        .router
+    pub fn attach(self) -> Router<S> {
+        let base_url = self.base_url.clone();
+
+        self.add_handler("/kindling/v0.1/black.png", handler::BlackoutHandler)
+            .router
+            .route(
+                "/kindling/v0.1/refresh-image.sh",
+                get(|| async {
+                    include_str!("../refresh-image.sh")
+                        .replace("SUB_BUILD_TIME", BUILD_DATE)
+                        .replace("SUB_FETCH_TIME", &format!("{}", Utc::now()))
+                }),
+            )
+            .route(
+                "/kindling/v0.1/install",
+                get(
+                    || async move { include_str!("../install").replace("SUB_BASE_URL", &base_url) },
+                ),
+            )
     }
+}
+
+async fn handler_inner<H>(handler: &H, params: ImageParams) -> Result<Response<Body>>
+where
+    H: 'static + Send + Sync + Handler,
+{
+    let data = handler
+        .load()
+        .await
+        .wrap_err_with(|| format!("{}::load", std::any::type_name::<H>()))?;
+
+    let image_data = png::png_handler(params, &*handler, data)
+        .wrap_err_with(|| format!("{}::handle", std::any::type_name::<H>()))?;
+
+    Ok(Response::builder()
+        .status(StatusCode::OK)
+        .header("Content-Type", "image/png")
+        .body(Body::from(Bytes::from(image_data)))
+        .unwrap())
 }
 
 struct ErrorPng {
     data: Vec<u8>,
-}
-
-trait WrapErrPng<T> {
-    fn wrap_err_png(self, params: ImageParams) -> Result<T, ErrorPng>;
-}
-
-impl<T> WrapErrPng<T> for eyre::Result<T> {
-    fn wrap_err_png(self, params: ImageParams) -> Result<T, ErrorPng> {
-        match self {
-            Ok(x) => Ok(x),
-            Err(error) => Err(ErrorPng {
-                data: png::error_png(params, error).unwrap(),
-            }),
-        }
-    }
 }
 
 impl IntoResponse for ErrorPng {

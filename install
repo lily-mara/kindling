@@ -1,0 +1,14 @@
+#!/bin/sh
+set -x
+
+if [ $(grep -c "rootfs.*[[:space:]]rw[[:space:],]" /proc/mounts) = '0' ]; then
+    mntroot rw
+fi
+
+mkdir -p /opt/kindling
+curl SUB_BASE_URL/kindling/v0.1/refresh-image.sh -o /opt/kindling/refresh-image.sh
+
+ln -s /opt/kindling/refresh-image.sh /usr/bin/
+
+sed -i '' '/refresh-image.sh/d' /etc/crontab/root
+echo '* * * * * refresh-image.sh SUB_BASE_URL'
