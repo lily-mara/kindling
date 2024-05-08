@@ -6,7 +6,7 @@
 
 cd /opt/kindling
 
-dimensions=$(eips -i | awk -e '{ print $1 $2 "\n" $3 $4 }' | awk -F: -e '/xres:/ { printf "width=" $2 } /yres:/ { printf "&height=" $2 }')
+dimensions=$(eips -i | awk '{ print $1 $2 "\n" $3 $4 }' | awk -F: '/xres:/ { printf "width=" $2 } /yres:/ { printf "&height=" $2 }')
 
 if [ ! -e kindling_black.png ]; then
     curl "$1/kindling/v0.1/black.png?target=kindle&${dimensions}" -o kindling_black.png
