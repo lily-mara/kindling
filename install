@@ -11,4 +11,4 @@ curl SUB_BASE_URL/kindling/v0.1/refresh-image.sh -o /opt/kindling/refresh-image.
 ln -s /opt/kindling/refresh-image.sh /usr/bin/
 
 sed -i '' '/refresh-image.sh/d' /etc/crontab/root
-echo '* * * * * refresh-image.sh SUB_BASE_URL'
+echo '* * * * * refresh-image.sh SUB_BASE_URL SUB_ROUTE'

@@ -1,8 +1,8 @@
 use axum::{
     body::{Body, Bytes},
-    extract::Query,
+    extract::{Query, State},
     http::StatusCode,
-    response::{IntoResponse, Response},
+    response::{Html, IntoResponse, Response},
     routing::get,
     Router,
 };
@@ -20,19 +20,39 @@ pub use crate::handler::Handler;
 
 const BUILD_DATE: &'static str = env!("BUILD_DATE");
 
-pub struct ApplicationBuilder<S> {
-    router: Router<S>,
+use askama::Template;
+
+#[derive(Template)]
+#[template(path = "index.html")]
+struct StopsTemplate<'a> {
+    routes: &'a [String],
+    base_url: &'a str,
+}
+
+pub struct ApplicationBuilder {
+    router: Router<Data>,
+    state: Data,
+}
+
+#[derive(Clone)]
+pub struct Data {
+    routes: Vec<String>,
     base_url: Cow<'static, str>,
 }
 
-impl<S> ApplicationBuilder<S>
-where
-    S: 'static + Clone + Send + Sync,
-{
-    pub fn new(router: Router<S>, base_url: impl Into<Cow<'static, str>>) -> Self {
+#[derive(Deserialize)]
+struct InstallQuery {
+    route: String,
+}
+
+impl ApplicationBuilder {
+    pub fn new(router: Router<Data>, base_url: impl Into<Cow<'static, str>>) -> Self {
         Self {
             router,
-            base_url: base_url.into(),
+            state: Data {
+                routes: Vec::new(),
+                base_url: base_url.into(),
+            },
         }
     }
 
@@ -43,6 +63,8 @@ where
     ) -> Self {
         let handler = Arc::new(handler);
         let inner_path = path.to_owned();
+
+        self.state.routes.push(inner_path.clone());
 
         self.router = self.router.route(
             path,
@@ -64,8 +86,8 @@ where
         self
     }
 
-    pub fn attach(self) -> Router<S> {
-        let base_url = self.base_url.clone();
+    pub fn attach(self) -> Router {
+        let state = self.state.clone();
 
         self.add_handler("/kindling/v0.1/black.png", handler::BlackoutHandler)
             .router
@@ -80,9 +102,27 @@ where
             .route(
                 "/kindling/v0.1/install",
                 get(
-                    || async move { include_str!("../install").replace("SUB_BASE_URL", &base_url) },
+                    |state: State<Data>, query: Query<InstallQuery>| async move {
+                        include_str!("../install")
+                            .replace("SUB_BASE_URL", &state.base_url)
+                            .replace("SUB_ROUTE", &query.route)
+                    },
                 ),
             )
+            .route(
+                "/",
+                get(|state: State<Data>| async move {
+                    Html(
+                        StopsTemplate {
+                            routes: &state.routes,
+                            base_url: state.base_url.as_ref(),
+                        }
+                        .render()
+                        .unwrap(),
+                    )
+                }),
+            )
+            .with_state(state)
     }
 }
 

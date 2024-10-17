@@ -32,7 +32,7 @@ async fn main() {
         .with_env_filter(EnvFilter::from_default_env())
         .init();
 
-    let app = ApplicationBuilder::new(Router::new(), "http://10.0.0.50:3000")
+    let app = ApplicationBuilder::new(Router::new(), "http://localhost:3000")
         .add_handler(
             "/error.png",
             ErrorHandler {

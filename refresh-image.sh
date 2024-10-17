@@ -12,7 +12,7 @@ if [ ! -e kindling_black.png ]; then
     curl "$1/kindling/v0.1/black.png?target=kindle&${dimensions}" -o kindling_black.png
 fi
 
-curl "$1/$2?target=kindle&${dimensions}" -o kindling_image_maybe.png
+curl "$1$2?target=kindle&${dimensions}" -o kindling_image_maybe.png
 
 if [ $? -eq 0 ]; then
     mv kindling_image_maybe.png kindling_image.png

@@ -1,0 +1,41 @@
+<!doctype html>
+<html lang="en">
+    <head>
+        <meta charset="UTF-8" />
+        <title>Kindling main page</title>
+    </head>
+    <body>
+        <h1>Kindling server</h1>
+        <p>
+            This is the root page of a
+            <a href="https://github.com/lily-mara/kindling">Kindling</a> server.
+            This server generates PNG image data that can be displayed on a
+            Kindle. Below you will find all of the images that this server knows
+            how to generate. You can click on the links to see a preview of what
+            this image will look like on your Kindle, and next to the links you
+            will find a command you can run on your kindle to set it up as
+            auto-refreshing that particular image.
+        </p>
+
+        <h2>Available Routes</h2>
+        <ul>
+            {% for route in routes %}
+            <li>
+                <a href="{{ route }}">{{route}}</a> -
+                <code>
+                    curl
+                    {{base_url}}/kindling/v0.1/install?route={{route|urlencode}}</code
+                >
+            </li>
+            {% endfor %}
+        </ul>
+
+        <style type="text/css">
+            code {
+                background-color: lightgrey;
+                padding: 5px;
+                border-radius: 3px;
+            }
+        </style>
+    </body>
+</html>
