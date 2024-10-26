@@ -164,10 +164,10 @@ fn default_render_target() -> RenderTarget {
     RenderTarget::Browser
 }
 fn default_width() -> i32 {
-    1058
+    754
 }
 fn default_height() -> i32 {
-    754
+    1058
 }
 
 #[derive(Deserialize, Clone, Copy)]
