@@ -1,8 +1,8 @@
 use eyre::{bail, eyre, Result};
 use serde::Deserialize;
-use skia_safe::{Bitmap, Canvas, Color4f, ImageInfo, Point};
+use skia_safe::{image::Image, Bitmap, Canvas, Color4f, ImageInfo, Point};
 
-use crate::{Handler, ImageParams};
+use crate::{Handler, ImageParams, Orientation};
 
 #[derive(Clone, Copy, Debug, PartialEq, Deserialize)]
 pub enum RenderTarget {
@@ -17,16 +17,10 @@ pub fn png_handler<H, D>(params: ImageParams, handler: &H, data: D) -> Result<Ve
 where
     H: Handler<Data = D>,
 {
-    let dimensions = if params.target == RenderTarget::Kindle {
-        (params.height, params.width)
-    } else {
-        (params.width, params.height)
-    };
-
     let mut bitmap = Bitmap::new();
     if !bitmap.set_info(
         &ImageInfo::new(
-            dimensions,
+            (params.width, params.height),
             skia_safe::ColorType::Gray8,
             skia_safe::AlphaType::Unknown,
             None,
@@ -39,15 +33,6 @@ where
 
     let canvas =
         Canvas::from_bitmap(&bitmap, None).ok_or(eyre!("failed to construct skia canvas"))?;
-    if params.target == RenderTarget::Kindle {
-        canvas.rotate(
-            90.0,
-            Some(Point::new(
-                params.height as f32 / 2.0,
-                params.height as f32 / 2.0,
-            )),
-        );
-    }
 
     canvas.clear(Color4f::new(1.0, 1.0, 1.0, 1.0));
 
@@ -55,9 +40,43 @@ where
 
     let image = bitmap.as_image();
 
+    let image =
+        if params.target == RenderTarget::Kindle && H::orientation() == Orientation::Landscape {
+            rotate_image(image, canvas.image_info())?
+        } else {
+            image
+        };
+
     let image_data = image
         .encode(None, skia_safe::EncodedImageFormat::PNG, None)
         .ok_or(eyre!("failed to encode skia image"))?;
 
     Ok(image_data.as_bytes().into())
+}
+
+fn rotate_image(original_image: Image, original_info: ImageInfo) -> Result<Image> {
+    let mut bitmap = Bitmap::new();
+    if !bitmap.set_info(
+        &ImageInfo::new(
+            (original_info.height(), original_info.width()),
+            skia_safe::ColorType::Gray8,
+            skia_safe::AlphaType::Unknown,
+            None,
+        ),
+        None,
+    ) {
+        bail!("failed to initialize skia bitmap");
+    }
+    bitmap.alloc_pixels();
+    let canvas =
+        Canvas::from_bitmap(&bitmap, None).ok_or(eyre!("failed to construct skia canvas"))?;
+    canvas.rotate(
+        90.0,
+        Some(Point::new(
+            original_info.height() as f32 / 2.0,
+            original_info.height() as f32 / 2.0,
+        )),
+    );
+    canvas.draw_image(original_image, (0, 0), None);
+    Ok(bitmap.as_image())
 }

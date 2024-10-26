@@ -16,7 +16,7 @@ use crate::png::RenderTarget;
 mod handler;
 mod png;
 
-pub use crate::handler::Handler;
+pub use crate::handler::{Handler, Orientation};
 
 const BUILD_DATE: &'static str = env!("BUILD_DATE");
 
@@ -169,17 +169,11 @@ fn default_width() -> i32 {
 fn default_height() -> i32 {
     754
 }
-fn default_orientation() -> Orientation {
-    Orientation::Landscape
-}
 
 #[derive(Deserialize, Clone, Copy)]
 pub struct ImageParams {
     #[serde(default = "default_render_target")]
     pub target: RenderTarget,
-
-    #[serde(default = "default_orientation")]
-    pub orientation: Orientation,
 
     #[serde(default = "default_width")]
     pub width: i32,
@@ -194,13 +188,6 @@ impl Default for ImageParams {
             target: default_render_target(),
             width: default_width(),
             height: default_height(),
-            orientation: default_orientation(),
         }
     }
-}
-
-#[derive(Debug, Clone, Copy, Deserialize)]
-pub enum Orientation {
-    Portrait,
-    Landscape,
 }
