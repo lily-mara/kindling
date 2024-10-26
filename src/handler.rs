@@ -22,9 +22,10 @@ pub trait Handler {
 
     fn draw(&self, canvas: &Canvas, data: Self::Data) -> Result<()>;
 
-    /// Returns the orientation for the image that this handler renders. Used to
-    /// determine if a hard-rotated image should be produced for the Kindle.
+    /// Returns the orientation for the image that this handler renders.
+    /// Defaults to Portrait orientation. Used to determine if a
+    /// hard-rotated image should be produced for the Kindle.
     fn orientation() -> Orientation {
-        Orientation::Landscape
+        Orientation::Portrait
     }
 }
