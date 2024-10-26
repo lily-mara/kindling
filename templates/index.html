@@ -24,7 +24,8 @@
                 <a href="{{ route }}">{{route}}</a> -
                 <code>
                     curl
-                    {{base_url}}/kindling/v0.1/install?route={{route|urlencode}}</code
+                    {{base_url}}/kindling/v0.1/install?route={{route|urlencode}}
+                    | sh</code
                 >
             </li>
             {% endfor %}
