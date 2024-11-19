@@ -17,10 +17,19 @@ pub fn png_handler<H, D>(params: ImageParams, handler: &H, data: D) -> Result<Ve
 where
     H: Handler<Data = D>,
 {
+    let big_number = params.height.max(params.width);
+    let small_number = params.height.min(params.width);
+
+    let (width, height) = if H::orientation() == Orientation::Portrait {
+        (small_number, big_number)
+    } else {
+        (big_number, small_number)
+    };
+
     let mut bitmap = Bitmap::new();
     if !bitmap.set_info(
         &ImageInfo::new(
-            (params.width, params.height),
+            (width, height),
             skia_safe::ColorType::Gray8,
             skia_safe::AlphaType::Unknown,
             None,
